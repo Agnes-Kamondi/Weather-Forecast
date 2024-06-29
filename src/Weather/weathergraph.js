@@ -1,16 +1,30 @@
-import React, { useEffect, useRef } from 'react';
-import { Chart, registerables } from 'chart.js';
+import React from 'react';
 import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
-
-Chart.register(...registerables);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const WeatherGraph = ({ data }) => {
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
-
-  const temperatures = data.forecast.forecastday[0].hour.map(hour => hour.temp_c);
-  const labels = data.forecast.forecastday[0].hour.map(hour => hour.time.split(' ')[1]);
+  const labels = data.forecast.forecastday[0].hour.map((hour) => hour.time.split(' ')[1]);
+  const temperatures = data.forecast.forecastday[0].hour.map((hour) => hour.temp_c);
+  const precipitations = data.forecast.forecastday[0].hour.map((hour) => hour.precip_mm);
 
   const chartData = {
     labels,
@@ -18,54 +32,54 @@ const WeatherGraph = ({ data }) => {
       {
         label: 'Temperature (°C)',
         data: temperatures,
-        borderColor: 'blue',
-        fill: false,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        yAxisID: 'y-axis-temperature',
+      },
+      {
+        label: 'Precipitation (mm)',
+        data: precipitations,
+        borderColor: 'rgba(153, 102, 255, 1)',
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        yAxisID: 'y-axis-precipitation',
       },
     ],
   };
 
   const options = {
-    responsive: true,
     scales: {
-      x: {
-        type: 'category',
-        title: {
-          display: true,
-          text: 'Time',
-        },
+      'y-axis-temperature': {
+        type: 'linear',
+        position: 'left',
       },
-      y: {
-        title: {
-          display: true,
-          text: 'Temperature (°C)',
-        },
+      'y-axis-precipitation': {
+        type: 'linear',
+        position: 'right',
       },
     },
-  };
-
-  useEffect(() => {
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-    }
-    chartInstanceRef.current = new Chart(chartRef.current, {
-      type: 'line',
-      data: chartData,
-      options: options,
-    });
-
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
+    plugins: {
+      legend: {
+        display: true,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            if (context.dataset.label === 'Temperature (°C)') {
+              return `${context.label}: ${context.raw}°C`;
+            } else if (context.dataset.label === 'Precipitation (mm)') {
+              return `${context.label}: ${context.raw} mm`;
+            }
+          }
+        }
       }
-    };
-  }, [data]);
+    }
+  };
 
   return (
     <div className="weather-graph">
-      <canvas ref={chartRef}></canvas>
+      <Line data={chartData} options={options} />
     </div>
   );
 };
 
 export default WeatherGraph;
-

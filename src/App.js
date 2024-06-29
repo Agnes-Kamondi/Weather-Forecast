@@ -1,50 +1,88 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import WeatherCard from './Weather/weathercard';
+import './App.css'
 import WeatherGraph from './Weather/weathergraph';
-import './App.css';
-
-const API_KEY = '4e695d287066473cbd1150755242706'; // Your weather API key
+import { FaSearch } from 'react-icons/fa'; 
+import { WiHumidity, WiSunset, WiSunrise, WiDaySunny } from 'react-icons/wi'; 
 
 const App = () => {
-  const [city, setCity] = useState('London'); // Default city
-  const [weatherData, setWeatherData] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [city, setCity] = useState('Nairobi');
+  const [data, setData] = useState(null);
+  const [inputCity, setInputCity] = useState('');
 
-  const fetchWeatherData = async (city) => {
+  useEffect(() => {
+    fetchData(city);
+  }, [city]);
+
+  const fetchData = async (city) => {
     try {
-      const response = await axios.get(`http://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${city}&days=1&aqi=no&alerts=no`);
-      setWeatherData(response.data);
+      const response = await axios.get(`http://api.weatherapi.com/v1/forecast.json?key=4e695d287066473cbd1150755242706&q=${city}&days=1&aqi=no&alerts=no`);
+      setData(response.data);
     } catch (error) {
-      console.error('Error fetching weather data:', error);
+      console.error('Error fetching the weather data', error);
     }
   };
 
-  useEffect(() => {
-    fetchWeatherData(city);
-  }, [city]);
-
   const handleSearch = (e) => {
-    e.preventDefault();
-    setCity(searchQuery);
+    if (e.key === 'Enter') {
+      setCity(inputCity);
+    }
   };
 
   return (
-    <div className="app">
-      <form onSubmit={handleSearch}>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Enter city name"
-        />
-        <button type="submit">Search</button>
-      </form>
-      {weatherData && (
-        <>
-          <WeatherCard data={weatherData} />
-          <WeatherGraph data={weatherData} />
-        </>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>Rayn</h1>
+        <div className="search-bar">
+          <input
+            type="text"
+            value={inputCity}
+            onChange={(e) => setInputCity(e.target.value)}
+            placeholder="Enter city name"
+            onKeyPress={handleSearch}
+          />
+          <FaSearch className="search-icon" onClick={() => setCity(inputCity)} />
+        </div>
+      </header>
+      {data && (
+        <div className="weather-info">
+          <div className="weather-card">
+            <h2>{data.location.name}, {data.location.country}</h2>
+            <p>{data.current.temp_c}°C</p>
+            <p>{data.location.localtime}</p>
+            <p>{data.current.condition.text}</p>
+          </div>
+          <div className="weather-details">
+            <div className='weather-condition'>  
+              <div className='weather'>
+              <div>
+            <div className="weather-detail-item">
+              <WiHumidity size={30} /> 
+              <p>Humidity: {data.current.humidity}%</p>
+            </div>
+            <div className="weather-detail-item">
+              <WiSunset size={30} />
+              <p>Sunset: {data.forecast.forecastday[0].astro.sunset}</p>
+            </div>
+            </div>
+            <div>
+            <div className="weather-detail-item">
+              <WiDaySunny size={30} />
+              <p>UV Index: {data.current.uv}</p>
+            </div>
+            <div className="weather-detail-item">
+              <WiSunrise size={30} />
+              <p>Sunrise: {data.forecast.forecastday[0].astro.sunrise}</p>
+            </div>
+            </div>
+            </div>
+          <div className="monthly-rainfall">
+            <p>Monthly Rainfall:<br/> 48mm</p> {/* This should be dynamic based on data */}
+          </div>
+          </div>
+          <WeatherGraph data={data} />
+        </div>
+        </div>
       )}
     </div>
   );
